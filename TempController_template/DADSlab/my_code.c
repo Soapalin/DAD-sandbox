@@ -266,6 +266,7 @@ void InitUART1()
 void InitADC()
 {
     // Enable the ADC peripherals and the associated GPIO port
+    // liam was here
     //MAP_SysCtlPeripheralEnable(SYSCTL_PERIPH_ADC0);
     //MAP_SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOE);
 
