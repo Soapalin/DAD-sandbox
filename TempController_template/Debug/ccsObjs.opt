@@ -1,0 +1,1 @@
+"./TempController.obj" "./tm4c123gh6pge_startup_ccs.obj" "./DADSlab/images.obj" "./DADSlab/my_code.obj" "./drivers/cfal96x64x16.obj" "./utils/uartstdio.obj" "../hello_ccs.cmd" -l"C:/Software/ti/TivaWare_C_Series-2.1.4.178/driverlib/ccs/Debug/driverlib.lib" -l"C:/Software/ti/TivaWare_C_Series-2.1.4.178/grlib/ccs/Debug/grlib.lib" -llibc.a 
