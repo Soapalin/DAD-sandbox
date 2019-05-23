@@ -41,7 +41,7 @@
 //static volatile uint32_t g_ui32TickCount;
 
 extern uint32_t ulADC0_Value[4];
-extern bool ADC_done;	// flag
+extern bool ADC_done;   // flag
 
 extern tContext sContext;
 extern tRectangle sRect;
@@ -71,7 +71,7 @@ float Kd = 0.02f;
 
 float previous_error = 0;
 float integral = 0;
-float Dt = 0.0001;	// 100ms
+float Dt = 0.0001;  // 100ms
 
 //*****************************************************************************
 // Initialization functions
@@ -79,30 +79,30 @@ float Dt = 0.0001;	// 100ms
 
 void InitPWM()
 {
-	volatile uint32_t PWM_HEATER_Period;
-	volatile uint32_t PWM_FAN_Period;
-	volatile uint32_t ui32Load;
-	volatile uint32_t ui32PWMClock;
+    volatile uint32_t PWM_HEATER_Period;
+    volatile uint32_t PWM_FAN_Period;
+    volatile uint32_t ui32Load;
+    volatile uint32_t ui32PWMClock;
 
     //
     // Set the PWM clock to the system clock / 8 40MHz/8 =  5 MHz
     //
-	MAP_SysCtlPWMClockSet(SYSCTL_PWMDIV_64);
+    MAP_SysCtlPWMClockSet(SYSCTL_PWMDIV_64);
 
     //
     // The PWM peripheral must be enabled for use.
     //
-	//MAP_SysCtlPeripheralEnable(SYSCTL_PERIPH_PWM0);
-	//MAP_SysCtlPeripheralEnable(SYSCTL_PERIPH_PWM1);
+    //MAP_SysCtlPeripheralEnable(SYSCTL_PERIPH_PWM0);
+    //MAP_SysCtlPeripheralEnable(SYSCTL_PERIPH_PWM1);
 
     //
     // For this example PWM1 is used with PortG Pins 6 and 7.  The actual port
     // and pins used may be different on your part, consult the data sheet for
     // more information.  GPIO port G needs to be enabled so these pins can be
     // used.
-	// PWM0 PG3
+    // PWM0 PG3
 
-	//MAP_SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOG);
+    //MAP_SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOG);
 
     //
     // Configure the GPIO pin muxing to select PWM functions for these pins.
@@ -152,21 +152,21 @@ void InitPWM()
     //PWMPeriod = MAP_SysCtlClockGet()/2.0 * Fs;
     //PWMPeriod /= 8;
 
-    //ui32PWMClock = MAP_SysCtlClockGet();	// 40 MHz
+    //ui32PWMClock = MAP_SysCtlClockGet();  // 40 MHz
 
     //PWM_HEATER_Period = MAP_SysCtlClockGet()/2.0 * Fs;
     PWM_HEATER_Period = MAP_SysCtlClockGet() / PWM_HEATER_FREQUENCY;
     PWM_HEATER_Period /= 64;
-    //PWM_HEATER_Period = 5000;	// 40 MHz / 1kHz /8
+    //PWM_HEATER_Period = 5000; // 40 MHz / 1kHz /8
 
     PWM_FAN_Period = MAP_SysCtlClockGet() / PWM_FAN_FREQUENCY;
     PWM_FAN_Period /= 64;
-    //PWM_FAN_Period = 65535;	//
+    //PWM_FAN_Period = 65535;   //
 
-	//uint32_t PWM_HEATER_Period;
-	//uint32_t PWM_FAN_Period
-	//#define PWM_HEATER_FREQUENCY 1000
-	//#define PWM_FAN_FREQUENCY 5
+    //uint32_t PWM_HEATER_Period;
+    //uint32_t PWM_FAN_Period
+    //#define PWM_HEATER_FREQUENCY 1000
+    //#define PWM_FAN_FREQUENCY 5
 
 
     //MAP_PWMGenPeriodSet(PWM0_BASE, PWM_GEN_3, PWMPeriod);
@@ -220,47 +220,47 @@ void InitTimerPWM(void)
 // from here http://e2e.ti.com/support/microcontrollers/tiva_arm/f/908/t/249597.aspx
 // another example here http://e2e.ti.com/support/microcontrollers/tiva_arm/f/908/t/236151.aspx
 {
-	  MAP_SysCtlPeripheralEnable(SYSCTL_PERIPH_WTIMER2);
-	  //MAP_SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOD);	// already done
-	  MAP_GPIOPinConfigure(GPIO_PD0_WT2CCP0);
-	  MAP_GPIOPinConfigure(GPIO_PD1_WT2CCP1);
-	  MAP_GPIOPinTypeTimer(GPIO_PORTD_BASE, GPIO_PIN_0);
-	  MAP_GPIOPinTypeTimer(GPIO_PORTD_BASE, GPIO_PIN_1);
-	  MAP_TimerConfigure(WTIMER2_BASE, TIMER_CFG_SPLIT_PAIR | TIMER_CFG_A_PWM | TIMER_CFG_B_PWM);
-	  //MAP_TimerConfigure(WTIMER2_BASE, TIMER_CFG_SPLIT_PAIR | TIMER_CFG_B_PWM);
-	  MAP_TimerLoadSet(WTIMER2_BASE, TIMER_A, 50000);	// 50MHz / 50000 -> 1kHz
-	  MAP_TimerMatchSet(WTIMER2_BASE, TIMER_A, 25000);
-	  MAP_TimerLoadSet(WTIMER2_BASE, TIMER_B, 10000000);	// 50MHz / 10000000 -> 5Hz
-	  MAP_TimerMatchSet(WTIMER2_BASE, TIMER_B, 5000000);
-	  MAP_TimerEnable(WTIMER2_BASE, TIMER_A | TIMER_B);
-	  //MAP_TimerEnable(WTIMER2_BASE, TIMER_B);
+      MAP_SysCtlPeripheralEnable(SYSCTL_PERIPH_WTIMER2);
+      //MAP_SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOD);    // already done
+      MAP_GPIOPinConfigure(GPIO_PD0_WT2CCP0);
+      MAP_GPIOPinConfigure(GPIO_PD1_WT2CCP1);
+      MAP_GPIOPinTypeTimer(GPIO_PORTD_BASE, GPIO_PIN_0);
+      MAP_GPIOPinTypeTimer(GPIO_PORTD_BASE, GPIO_PIN_1);
+      MAP_TimerConfigure(WTIMER2_BASE, TIMER_CFG_SPLIT_PAIR | TIMER_CFG_A_PWM | TIMER_CFG_B_PWM);
+      //MAP_TimerConfigure(WTIMER2_BASE, TIMER_CFG_SPLIT_PAIR | TIMER_CFG_B_PWM);
+      MAP_TimerLoadSet(WTIMER2_BASE, TIMER_A, 50000);   // 50MHz / 50000 -> 1kHz
+      MAP_TimerMatchSet(WTIMER2_BASE, TIMER_A, 25000);
+      MAP_TimerLoadSet(WTIMER2_BASE, TIMER_B, 10000000);    // 50MHz / 10000000 -> 5Hz
+      MAP_TimerMatchSet(WTIMER2_BASE, TIMER_B, 5000000);
+      MAP_TimerEnable(WTIMER2_BASE, TIMER_A | TIMER_B);
+      //MAP_TimerEnable(WTIMER2_BASE, TIMER_B);
 }
 
 
 void InitUART1()
 {
-	MAP_SysCtlPeripheralEnable(SYSCTL_PERIPH_UART1);
-	//SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOC);
-	MAP_GPIOPinConfigure(GPIO_PC4_U1RX);
-	MAP_GPIOPinConfigure(GPIO_PC5_U1TX);
-	MAP_GPIOPinTypeUART(GPIO_PORTC_BASE, GPIO_PIN_4 | GPIO_PIN_5);
-	MAP_UARTConfigSetExpClk(UART1_BASE, MAP_SysCtlClockGet(), 115200,
-	(UART_CONFIG_WLEN_8 | UART_CONFIG_STOP_ONE | UART_CONFIG_PAR_NONE));
-	//MAP_IntEnable(INT_UART1);
-	//UARTIntEnable(UART1_BASE, UART_INT_TX);
-	//MAP_UARTTxIntModeSet(UART1_BASE, UART_TXINT_MODE_EOT)
-	MAP_UARTCharPut(UART1_BASE, 'E');
-	MAP_UARTCharPut(UART1_BASE, 'n');
-	MAP_UARTCharPut(UART1_BASE, 't');
-	MAP_UARTCharPut(UART1_BASE, 'e');
-	MAP_UARTCharPut(UART1_BASE, 'r');
-	MAP_UARTCharPut(UART1_BASE, ' ');
-	MAP_UARTCharPut(UART1_BASE, 'T');
-	MAP_UARTCharPut(UART1_BASE, 'e');
-	MAP_UARTCharPut(UART1_BASE, 'x');
-	MAP_UARTCharPut(UART1_BASE, 't');
-	MAP_UARTCharPut(UART1_BASE, ':');
-	MAP_UARTCharPut(UART1_BASE, ' ');
+    MAP_SysCtlPeripheralEnable(SYSCTL_PERIPH_UART1);
+    //SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOC);
+    MAP_GPIOPinConfigure(GPIO_PC4_U1RX);
+    MAP_GPIOPinConfigure(GPIO_PC5_U1TX);
+    MAP_GPIOPinTypeUART(GPIO_PORTC_BASE, GPIO_PIN_4 | GPIO_PIN_5);
+    MAP_UARTConfigSetExpClk(UART1_BASE, MAP_SysCtlClockGet(), 115200,
+    (UART_CONFIG_WLEN_8 | UART_CONFIG_STOP_ONE | UART_CONFIG_PAR_NONE));
+    //MAP_IntEnable(INT_UART1);
+    //UARTIntEnable(UART1_BASE, UART_INT_TX);
+    //MAP_UARTTxIntModeSet(UART1_BASE, UART_TXINT_MODE_EOT)
+    MAP_UARTCharPut(UART1_BASE, 'E');
+    MAP_UARTCharPut(UART1_BASE, 'n');
+    MAP_UARTCharPut(UART1_BASE, 't');
+    MAP_UARTCharPut(UART1_BASE, 'e');
+    MAP_UARTCharPut(UART1_BASE, 'r');
+    MAP_UARTCharPut(UART1_BASE, ' ');
+    MAP_UARTCharPut(UART1_BASE, 'T');
+    MAP_UARTCharPut(UART1_BASE, 'e');
+    MAP_UARTCharPut(UART1_BASE, 'x');
+    MAP_UARTCharPut(UART1_BASE, 't');
+    MAP_UARTCharPut(UART1_BASE, ':');
+    MAP_UARTCharPut(UART1_BASE, ' ');
 }
 
 void InitADC()
@@ -324,9 +324,9 @@ void InitADC()
 
 void InitI2C1(void)
 {
-	// based on example from here:
-	// http://e2e.ti.com/support/microcontrollers/stellaris_arm/f/471/t/169023.aspx?pi74263=2
-	// initialize I2C1 peripheral (PA6=SCL, PA7=SDA)
+    // based on example from here:
+    // http://e2e.ti.com/support/microcontrollers/stellaris_arm/f/471/t/169023.aspx?pi74263=2
+    // initialize I2C1 peripheral (PA6=SCL, PA7=SDA)
     //MAP_SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOA);
     MAP_SysCtlPeripheralEnable(SYSCTL_PERIPH_I2C1);
 
@@ -353,9 +353,9 @@ void InitI2C1(void)
 
 void UART1IntHandler()
 {
-	uint32_t ui32Status;
-	ui32Status = MAP_UARTIntStatus(UART1_BASE, true); //get interrupt status
-	MAP_UARTIntClear(UART1_BASE, ui32Status); //clear the asserted interrupts
+    uint32_t ui32Status;
+    ui32Status = MAP_UARTIntStatus(UART1_BASE, true); //get interrupt status
+    MAP_UARTIntClear(UART1_BASE, ui32Status); //clear the asserted interrupts
 }
 
 
@@ -382,48 +382,76 @@ void ADC0SS0Handler(void)
 
 void PID_controller(void)
 {
-	/*
-	 * Pseudo code (source Wikipedia)
-	 *
-	previous_error = 0
-	integral = 0
-	start:
-		error = setpoint – PV [actual_position]
-		integral = integral + error*dt
-		derivative = (error - previous_error)/dt
-		output = Kp*error + Ki*integral + Kd*derivative
-		previous_error = error
-		wait(dt)
-		goto start
-	*/
+    /*
+     * Pseudo code (source Wikipedia)
+     *
+    previous_error = 0
+    integral = 0
+    start:
+        error = setpoint – PV [actual_position]
+        integral = integral + error*dt
+        derivative = (error - previous_error)/dt
+        output = Kp*error + Ki*integral + Kd*derivative
+        previous_error = error
+        wait(dt)
+        goto start
+    */
 
-	float error;
-	float derivative;
-	float output;
-	float tempPWM;
-	uint32_t PWMheater;
-	uint32_t PWMfan;
+    float error;
 
-	float fanout = 34.1;
 
+    float tempPWM;
+    uint32_t PWMheater;
+    uint32_t PWMfan;
+
+    float fanOutput = 34.1;
+
+
+    float heaterOutput;
     // to be finished by you
     // ...
+    float oldError;
+    float KaF;
+    float KbF;
+    float KaH;
+    float KbH;
+    float oldFanPWM;
+    float oldHeaterPWM;
+    float actualTemp;
 
-	// convert output (PWM) into the value to write into registers
-	if(output > 100) output = 100.0f;
-	if(output < 0) output = 0.0f;
 
-	tempPWM = output * 50000/100;
-	PWMheater = (uint32_t)tempPWM;
-	MAP_TimerMatchSet(WTIMER2_BASE, TIMER_A, 50000 - PWMheater);
+    error = ch0V - ch2V; // error = reference channel - filter output
 
-	tempPWM = fanout * 10000000/100;
-	PWMfan = (uint32_t)tempPWM;
-	MAP_TimerMatchSet(WTIMER2_BASE, TIMER_B, 10000000 - PWMfan);
+    if(error >= 0.3)
+    {
+        heaterOutput = 0.01;
+        fanOutput = oldFanPWM + (((KaF*(error))+ ((KbF)*oldError)));
+    }
+    else
+    {
+        heaterOutput = oldHeaterPWM + (KaH*(-error) + (KbH*(-oldError)));
+        fanOutput = 0.01;
+    }
 
-	// update PWM values for the screen
-	snprintf(ascii_PWMH, 10, "%.1f", output);
-	snprintf(ascii_PWMF, 10, "%.1f", fanout);
+    oldError = error;
+
+
+
+    // convert output (PWM) into the value to write into registers
+    if(heaterOutput > 0.99) heaterOutput = 0.99f; // If heaterOuput is over 0.99, make it equal to 0.99
+    if(heaterOutput < 0.01) heaterOutput = 0.01f; // If heaterOutput is under 0.01, make it equal to 0.01
+
+    tempPWM = heaterOutput * 50000;
+    PWMheater = (uint32_t)tempPWM;
+    MAP_TimerMatchSet(WTIMER2_BASE, TIMER_A, 50000 - PWMheater);
+
+    tempPWM = fanOutput * 10000000;
+    PWMfan = (uint32_t)tempPWM;
+    MAP_TimerMatchSet(WTIMER2_BASE, TIMER_B, 10000000 - PWMfan);
+
+    // update PWM values for the screen
+    snprintf(ascii_PWMH, 10, "%.1f", output);
+    snprintf(ascii_PWMF, 10, "%.1f", fanout);
 
 }
 
@@ -450,31 +478,31 @@ void adc2ASCII(void)
 // and later converted into ASCII
 // and stored globally for oled and packet updates
 {
-	//ui32Millivolts = (g_pui32ADCData[ui8Idx] * 4100) / 819;
-	//uit32_t ui32Millivolts;
-	//float ch0V, ch1V, ch2V, ch3V;
-	//float ch0T, ch1T, ch2T, ch3T;
+    ui32Millivolts = (g_pui32ADCData[ui8Idx] * 4100) / 819;
+    uit32_t ui32Millivolts;
+    float ch0V, ch1V, ch2V, ch3V;
+    float ch0T, ch1T, ch2T, ch3T;
 
-	//ui32Millivolts = (ulADC0_Value[0] * 4100) / 819;
-	//ch0V = ui32Millivolts / 1000;
-	ch0V = ulADC0_Value[0] * 0.7326/146;
-	ch1V = ulADC0_Value[1] * 0.7326/146;
-	ch2V = ulADC0_Value[2] * 0.7326/146;
-	ch3V = ulADC0_Value[3] * 0.7326/146;
+//  ui32Millivolts = (ulADC0_Value[0] * 4100) / 819;
+//  ch0V = ui32Millivolts / 1000;
+    ch0V = ulADC0_Value[0] * 0.7326/146;
+    ch1V = ulADC0_Value[1] * 0.7326/146;
+    ch2V = ulADC0_Value[2] * 0.7326/146;
+    ch3V = ulADC0_Value[3] * 0.7326/146;
 
-	snprintf(ascii_REF_V, 10, "%.2f", ch0V);
-	snprintf(ascii_LSH_V, 10, "%.2f", ch1V);
-	snprintf(ascii_FLT_V, 10, "%.2f", ch2V);
+    snprintf(ascii_REF_V, 10, "%.2f", ch0V);
+    snprintf(ascii_LSH_V, 10, "%.2f", ch1V);
+    snprintf(ascii_FLT_V, 10, "%.2f", ch2V);
 
 
-	ch0T = (ch0V/0.06 + 20);
-	ch1T = (ch1V/0.06 + 20);
-	ch2T = (ch2V/0.06 + 20);
-	ch3T = (ch3V/0.06 + 20);
+    ch0T = (19.6*ch0V)+26.55; //Reference
+    ch1T = (ch1V + 1.3451)/0.0507;; // Level Shifter
+    ch2T = (19.6*ch2V)+26.55; // LPF
+    ch3T = (ch3V/0.06 + 20); // ??
 
-	snprintf(ascii_REF_T, 10, "%.1f", ch0T);
-	snprintf(ascii_LSH_T, 10, "%.1f", ch1T);
-	snprintf(ascii_FLT_T, 10, "%.1f", ch2T);
+    snprintf(ascii_REF_T, 10, "%.1f", ch0T);
+    snprintf(ascii_LSH_T, 10, "%.1f", ch1T);
+    snprintf(ascii_FLT_T, 10, "%.1f", ch2T);
 
 }
 
@@ -508,7 +536,7 @@ void InitialScreen(void)
     // Display Set Point (Reference Temperature)
     //GrContextFontSet(&sContext, g_psFontCm12);
     GrContextFontSet(&sContext, g_psFontFixed6x8);
-    GrContextForegroundSet(&sContext, ClrWhite);	// font colour
+    GrContextForegroundSet(&sContext, ClrWhite);    // font colour
     GrStringDraw(&sContext, "REF: 32.1 C", -1, 0, 0, 0);
     //GrStringDraw(&sContext, "REF: 0.123456789", -1, 0, 0, 0);
 
@@ -520,10 +548,10 @@ void InitialScreen(void)
     GrContextForegroundSet(&sContext, ClrBlue);
     GrRectFill(&sContext, &sRect);
 
-    GrContextForegroundSet(&sContext, ClrWhite);	// font colour
-    GrStringDraw(&sContext, "LSH: 3.22V 34.5C", -1, 0, 12, 0);	// analog and digital sensors
-    GrStringDraw(&sContext, "FLT: 5.11V 99.9C", -1, 0, 23, 0);		// IR sensor
-    GrStringDraw(&sContext, "IR: 54.7 C", -1, 0, 35, 0);		// IR sensor
+    GrContextForegroundSet(&sContext, ClrWhite);    // font colour
+    GrStringDraw(&sContext, "LSH: 3.22V 34.5C", -1, 0, 12, 0);  // analog and digital sensors
+    GrStringDraw(&sContext, "FLT: 5.11V 99.9C", -1, 0, 23, 0);      // IR sensor
+    GrStringDraw(&sContext, "IR: 54.7 C", -1, 0, 35, 0);        // IR sensor
 
     // Fill the next xx rows with green
     sRect.i16XMin = 0;
@@ -532,7 +560,7 @@ void InitialScreen(void)
     sRect.i16YMax = 63;
     GrContextForegroundSet(&sContext, ClrGreen);
     GrRectFill(&sContext, &sRect);
-    GrContextForegroundSet(&sContext, ClrWhite);	// font colour
+    GrContextForegroundSet(&sContext, ClrWhite);    // font colour
     GrStringDraw(&sContext, "H=99% F=33%", -1, 0, 50, 0);
 
 
@@ -549,7 +577,7 @@ void InitialScreen(void)
 
 void UpdateScreen(void)
 {
-	char temp[20];
+    char temp[20];
 
     // Initialize the graphics context.
     //GrContextInit(&sContext, &g_sCFAL96x64x16);
@@ -565,7 +593,7 @@ void UpdateScreen(void)
     // Display Set Point (Reference Temperature)
     //GrContextFontSet(&sContext, g_psFontCm12);
     GrContextFontSet(&sContext, g_psFontFixed6x8);
-    GrContextForegroundSet(&sContext, ClrWhite);	// font colour
+    GrContextForegroundSet(&sContext, ClrWhite);    // font colour
     strcpy(temp, "REF: ");
     strcat(temp, ascii_REF_V);
     strcat(temp, "V ");
@@ -653,22 +681,22 @@ return ((value1<<8)+value0);
 
 void IR_Read(void)
 {
-	uint32_t ulTemperature;
+    uint32_t ulTemperature;
 
-	// read temperature from the sensor
-	ulTemperature = i2c_string(0x5a, 0x07);
-	ulTemperature *= 100;
-	ulTemperature /= 50;
-	ulTemperature -= 27315;
-	ulTemperature /= 10;
+    // read temperature from the sensor
+    ulTemperature = i2c_string(0x5a, 0x07);
+    ulTemperature *= 100;
+    ulTemperature /= 50;
+    ulTemperature -= 27315;
+    ulTemperature /= 10;
 
-	//usnprintf(cTempBuf, sizeof(cTempBuf), " %2u.%1u C",
-			//ulTemperature / 10, ulTemperature %10);
+    //usnprintf(cTempBuf, sizeof(cTempBuf), " %2u.%1u C",
+            //ulTemperature / 10, ulTemperature %10);
 
-	//snprintf(ascii_IR_T, 10, "%.2f", ulTemperature);
+    //snprintf(ascii_IR_T, 10, "%.2f", ulTemperature);
 
-	snprintf(ascii_IR_T, 10, " %2u.%1u",
-			ulTemperature / 10, ulTemperature %10);
+    snprintf(ascii_IR_T, 10, " %2u.%1u",
+            ulTemperature / 10, ulTemperature %10);
 }
 //*****************************************************************************
 // End of Digital Sensor Read
@@ -681,32 +709,32 @@ void IR_Read(void)
 // transmission time ~5.5 ms
 void SendPacket(void)
 {
-	char temp[100];
-	//char temp0[10];
+    char temp[100];
+    //char temp0[10];
 
-	strcpy(temp, "{\"name\":\"DADS\",\"REF\":");
-	strcat(temp, ascii_REF_T);
+    strcpy(temp, "{\"name\":\"DADS\",\"REF\":");
+    strcat(temp, ascii_REF_T);
 
-	strcat(temp, ",\"LSH\":");
-	strcat(temp, ascii_LSH_T);
+    strcat(temp, ",\"LSH\":");
+    strcat(temp, ascii_LSH_T);
 
-	strcat(temp, ",\"FLT\":");
-	strcat(temp, ascii_FLT_T);
+    strcat(temp, ",\"FLT\":");
+    strcat(temp, ascii_FLT_T);
 
-	strcat(temp, ",\"IR\":");
-	strcat(temp, ascii_IR_T);
-	//strcat(temp, "33.4");
+    strcat(temp, ",\"IR\":");
+    strcat(temp, ascii_IR_T);
+    //strcat(temp, "33.4");
 
-	strcat(temp, ",\"H\":");
-	strcat(temp, ascii_PWMH);
-	//strcat(temp, "77");
+    strcat(temp, ",\"H\":");
+    strcat(temp, ascii_PWMH);
+    //strcat(temp, "77");
 
-	strcat(temp, ",\"F\":");
-	strcat(temp, ascii_PWMF);
-	//strcat(temp, "88");
+    strcat(temp, ",\"F\":");
+    strcat(temp, ascii_PWMF);
+    //strcat(temp, "88");
 
 
-	strcat(temp, "}\r\n");
+    strcat(temp, "}\r\n");
 
     UARTprintf("%s", temp);
 
