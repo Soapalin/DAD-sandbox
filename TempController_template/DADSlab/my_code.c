@@ -69,13 +69,17 @@ char ascii_KaH[10];
 char ascii_KbH[10];
 
 // parameters for PID
-float Kp = 100.0f;
-float Ki = 0.2f;
-float Kd = 0.02f;
+//float Kp = 100.0f;
+//float Ki = 0.2f;
+//float Kd = 0.02f;
+const float KPH = 0.4268;
+const float KIH = 0.0176;
+const float KPF = 0.11;
+const float KIF = 0.1983;
 
 float previous_error = 0;
 float integral = 0;
-float Dt = 0.0001;  // 100ms
+float DT = 0.0001;  // 100ms
 
 //*****************************************************************************
 // Initialization functions
@@ -409,7 +413,7 @@ void PID_controller(void)
         goto start
     */
 
-    float error;
+    static float error = 0;
 
 
     float tempPWM;
@@ -422,36 +426,44 @@ void PID_controller(void)
     float heaterOutput;
     // to be finished by you
     // ...
-    float oldError;
-    float KaF;
-    float KbF;
-    float KaH;
-    float KbH;
-    float oldFanPWM;
-    float oldHeaterPWM;
+    static float oldError = 0;
+    float KaF = KPF;
+    float KbF = KIF*DT - KPF;
+    float KaH = KPH;
+    float KbH = KIH*DT - KPH;
+    static float oldFanPWM = 0;
+    static float oldHeaterPWM = 0;
 //    float actualTemp;
 
 
-    error = ch0V - ch2V; // error = reference channel - filter output
+    error = ch0T - ch2T; // error = reference channel - filter output
 
-    if(error >= 0.3)
+    if(error <= 0.3)
     {
         heaterOutput = 0.01;
-        fanOutput = oldFanPWM + (((KaF*(error))+ ((KbF)*oldError)));
+        fanOutput = oldFanPWM + (((KaF*(-error))+ ((KbF)*(-oldError))));
     }
     else
     {
-        heaterOutput = oldHeaterPWM + (KaH*(-error) + (KbH*(-oldError)));
+        heaterOutput = oldHeaterPWM + (KaH*(error) + (KbH*(oldError)));
         fanOutput = 0.01;
     }
 
     oldError = error;
+    oldHeaterPWM = heaterOutput;
+    oldFanPWM = fanOutput;
 
 
 
     // convert output (PWM) into the value to write into registers
     if(heaterOutput > 0.99) heaterOutput = 0.99f; // If heaterOuput is over 0.99, make it equal to 0.99
     if(heaterOutput < 0.01) heaterOutput = 0.01f; // If heaterOutput is under 0.01, make it equal to 0.01
+
+
+    if(fanOutput > 0.99) fanOutput = 0.99f; // If fanOuput is over 0.99, make it equal to 0.99
+    if(fanOutput < 0.01) fanOutput = 0.01f; // If fanOutput is under 0.01, make it equal to 0.01
+
+
 
     tempPWM = heaterOutput * 50000;
     PWMheater = (uint32_t)tempPWM;
@@ -462,14 +474,14 @@ void PID_controller(void)
     MAP_TimerMatchSet(WTIMER2_BASE, TIMER_B, 10000000 - PWMfan);
 
     // update PWM values for the screen
-    snprintf(ascii_PWMH, 10, "%.1f", heaterOutput);
-    snprintf(ascii_PWMF, 10, "%.1f", fanOutput);
+    snprintf(ascii_PWMH, 10, "%.2f", heaterOutput);
+    snprintf(ascii_PWMF, 10, "%.2f", fanOutput);
 
     // update Controller values
-    snprintf(ascii_KaF, 10, "%.4f", KaF);
-    snprintf(ascii_KbF, 10, "%.4f", KbF);
-    snprintf(ascii_KaH, 10, "%.4f", KaH);
-    snprintf(ascii_KbH, 10, "%.4f", KbH);
+    snprintf(ascii_KaF, 10, "%.2f", KaF);
+    snprintf(ascii_KbF, 10, "%.2f", KbF);
+    snprintf(ascii_KaH, 10, "%.2f", KaH);
+    snprintf(ascii_KbH, 10, "%.2f", KbH);
 
 }
 
@@ -498,8 +510,8 @@ void adc2ASCII(void)
 {
     //ui32Millivolts = (g_pui32ADCData[ui8Idx] * 4100) / 819;
     //uit32_t ui32Millivolts;
-    float ch0V, ch1V, ch2V, ch3V;
-    float ch0T, ch1T, ch2T, ch3T;
+    //float ch0V, ch1V, ch2V, ch3V;
+    //float ch0T, ch1T, ch2T, ch3T;
 
 //  ui32Millivolts = (ulADC0_Value[0] * 4100) / 819;
 //  ch0V = ui32Millivolts / 1000;
@@ -539,7 +551,7 @@ void InitialScreen(void)
     // Initialize the graphics context.
     //GrContextInit(&sContext, &g_sCFAL96x64x16);
 
-    // Fill the top 12 rows of the screen with blue
+    // Fill the top 12 rows of the screen with red
     sRect.i16XMin = 0;
     sRect.i16YMin = 0;
     sRect.i16XMax = 95;
@@ -558,7 +570,7 @@ void InitialScreen(void)
     GrStringDraw(&sContext, "REF: 32.1 C", -1, 0, 0, 0);
     //GrStringDraw(&sContext, "REF: 0.123456789", -1, 0, 0, 0);
 
-    // Fill the next xx rows with green
+    // Fill the next xx rows with blue
     sRect.i16XMin = 0;
     sRect.i16YMin = 12;
     sRect.i16XMax = 95;
@@ -607,11 +619,11 @@ void UpdateScreen(void)
     // Initialize the graphics context.
     //GrContextInit(&sContext, &g_sCFAL96x64x16);
 
-    // Fill the top 12 rows of the screen with blue
+    // Fill the top 12 rows of the screen with red
     sRect.i16XMin = 0;
     sRect.i16YMin = 0;
     sRect.i16XMax = 95;
-    sRect.i16YMax = 8;
+    sRect.i16YMax = 9;
     GrContextForegroundSet(&sContext, ClrRed);
     GrRectFill(&sContext, &sRect);
 
@@ -628,11 +640,11 @@ void UpdateScreen(void)
 
     // to be finished by you
     // ...
-    // Fill the next xx rows with green
+    // Fill the next xx rows with blue
     sRect.i16XMin = 0;
-    sRect.i16YMin = 12;
+    sRect.i16YMin = 10;
     sRect.i16XMax = 95;
-    sRect.i16YMax = 48;
+    sRect.i16YMax = 42;
     GrContextForegroundSet(&sContext, ClrBlue);
     GrRectFill(&sContext, &sRect);
 
@@ -657,11 +669,11 @@ void UpdateScreen(void)
 
     GrStringDraw(&sContext, lsh, -1, 0, 12, 0);      // Level Shifted Signal
     GrStringDraw(&sContext, flt, -1, 0, 23, 0);      // Filtered Signal
-    GrStringDraw(&sContext, ir, -1, 0, 35, 0);       // IR sensor
+    GrStringDraw(&sContext, ir, -1, 0, 34, 0);       // IR sensor
 
     // Fill the next xx rows with green
     sRect.i16XMin = 0;
-    sRect.i16YMin = 49;
+    sRect.i16YMin = 43;
     sRect.i16XMax = 951;
     sRect.i16YMax = 63;
     GrContextForegroundSet(&sContext, ClrGreen);
@@ -687,9 +699,9 @@ void UpdateScreen(void)
     strcat(kfan, " KbF=");
     strcat(kfan, ascii_KbF);
 
-    GrStringDraw(&sContext, pwm, -1, 0, 50, 0);
-    GrStringDraw(&sContext, pwm, -1, 0, 61, 0);
-    GrStringDraw(&sContext, pwm, -1, 0, 73, 0);
+    GrStringDraw(&sContext, pwm, -1, 0, 46, 0);
+    GrStringDraw(&sContext, kheater, -1, 0, 55, 0);
+    GrStringDraw(&sContext, kfan, -1, 0, 67, 0);
 
 
     // Flush any cached drawing operations.

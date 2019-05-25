@@ -189,14 +189,13 @@ SysTickIntHandler(void)
 
     // Toggle the LED on the board so the user can see that the acquisition
     // is running.
-    	//MAP_GPIOPinWrite(GPIO_PORTG_BASE, GPIO_PIN_2,
-                     //~MAP_GPIOPinRead(GPIO_PORTG_BASE, GPIO_PIN_2));
-    	//counter_for_controller++;
-        //if (counter_for_controller > 2)		// 2 x 100ms = 200ms
-        //{
-        	//counter_for_controller = 0;
-        	//controller_time = true;
-        //}
+    	//MAP_GPIOPinWrite(GPIO_PORTG_BASE, GPIO_PIN_2, ~MAP_GPIOPinRead(GPIO_PORTG_BASE, GPIO_PIN_2));
+    	counter_for_controller++;
+        if (counter_for_controller > 1)		// 1 x 100ms = 100ms
+        {
+        	counter_for_controller = 0;
+        	controller_time = true;
+        }
 
     	counter_for_packet++;
         if (counter_for_packet > 4)		// 5 x 100ms = 500ms
@@ -335,8 +334,8 @@ main(void)
     GrRectFill(&sContext, &sRect);
 
     GrContextForegroundSet(&sContext, ClrWhite);	// font colour
-    GrStringDraw(&sContext, "ver. 09/05/2018", -1, 0, 23, 0);
-    GrStringDraw(&sContext, "your name here ", -1, 0, 33, 0);
+    GrStringDraw(&sContext, "ver. 25/05/2019", -1, 0, 23, 0);
+    GrStringDraw(&sContext, "LW, BP, LT ", -1, 0, 33, 0);
     // Flush any cached drawing operations.
     //GrFlush(&sContext);
 
