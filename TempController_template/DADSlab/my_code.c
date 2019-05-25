@@ -550,6 +550,10 @@ void InitialScreen(void)
 void UpdateScreen(void)
 {
 	char temp[20];
+	char lsh[20];
+	char flt[20];
+	char ir[20];
+	char pwm[20];
 
     // Initialize the graphics context.
     //GrContextInit(&sContext, &g_sCFAL96x64x16);
@@ -575,6 +579,54 @@ void UpdateScreen(void)
 
     // to be finished by you
     // ...
+    // Fill the next xx rows with green
+    sRect.i16XMin = 0;
+    sRect.i16YMin = 12;
+    sRect.i16XMax = 95;
+    sRect.i16YMax = 48;
+    GrContextForegroundSet(&sContext, ClrBlue);
+    GrRectFill(&sContext, &sRect);
+
+    GrContextForegroundSet(&sContext, ClrWhite);    // font colour
+
+    strcpy(lsh, "LSH: ");
+    strcat(lsh, ascii_LSH_V);
+    strcat(lsh, "V ");
+    strcat(lsh, ascii_LSH_T);
+    strcat(lsh, "C");
+
+    strcpy(flt, "FLT: ");
+    strcat(flt, ascii_FLT_V);
+    strcat(flt, "V ");
+    strcat(flt, ascii_FLT_T);
+    strcat(flt, "C");
+
+    strcpy(ir, "IR: ");
+    strcat(ir, ascii_IR_T);
+    strcat(ir, "C");
+
+    GrStringDraw(&sContext, lsh, -1, 0, 12, 0);      // Level Shifted Signal
+    GrStringDraw(&sContext, flt, -1, 0, 23, 0);      // Filtered Signal
+    GrStringDraw(&sContext, ir, -1, 0, 35, 0);       // IR sensor
+
+    // Fill the next xx rows with green
+    sRect.i16XMin = 0;
+    sRect.i16YMin = 49;
+    sRect.i16XMax = 951;
+    sRect.i16YMax = 63;
+    GrContextForegroundSet(&sContext, ClrGreen);
+    GrRectFill(&sContext, &sRect);
+
+
+    GrContextForegroundSet(&sContext, ClrWhite);    // font colour
+
+    strcpy(pwm, "H=");
+    strcat(pwm, ascii_PWMH);
+    strcat(pwm, "% F=");
+    strcat(pwm, ascii_PWMF);
+    strcat(pwm, "%");
+    GrStringDraw(&sContext, pwm, -1, 0, 50, 0);
+
 
     // Flush any cached drawing operations.
     GrFlush(&sContext);
