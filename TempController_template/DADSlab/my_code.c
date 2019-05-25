@@ -269,17 +269,19 @@ void InitUART1()
 
 void InitADC()
 {
-    // Enable the ADC peripherals and the associated GPIO port
-    //MAP_SysCtlPeripheralEnable(SYSCTL_PERIPH_ADC0);
-    //MAP_SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOE);
+    // Enable the ADC peripherals and the associated GPIO port, we are using ADC0 with inputs from PortC
+    MAP_SysCtlPeripheralEnable(SYSCTL_PERIPH_ADC0);
+    MAP_SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOE);
 
     // Configure the pins to be used as analog inputs.
     // to be finished by you
-    // MAP_GPIOPinTypeADC...
+    // MAP_GPIOPinTypeADC(BASE ADDRESS OF GPIO PORT, BIT PACKED REPRESENTATION OF THE PIN(S);
+    MAP_GPIOPinTypeADC(GPIO_PORTC_BASE, GPIO_PIN_0 | GPIO_PIN_1 | GPIO_PIN_2 | GPIO_PIN_3);
 
     // Select the external reference for greatest accuracy.
     // to be finished by you
-    // MAP_ADCReferenceSet(...
+    // MAP_ADCReferenceSet(BASE ADDRESS OF ADC MODULE, REFERENCE TO USE);
+    MAP_ADCReferenceSet(ADC0_BASE, ADC_REF_EXT_3V);
 
     // Apply workaround for erratum 6.1, in order to use the
     // external reference.
@@ -297,31 +299,37 @@ void InitADC()
 
     // Initialize the ADC0 peripheral using sequencer 0 and processor trigger.
     // to be finished by you
-    // MAP_ADCSequenceConfigure(...
+    // MAP_ADCSequenceConfigure(BASE ADDRESS OF ADC MODULE, SAMPLE SEQUENCE NUMBER, TRIGGER SOURCE, PRIORITY);
+    MAP_ADCSequenceConfigure(ADC0_BASE, 0, ADC_TRIGGER_PROCESSOR, 0);
 
     //Sets the input positions, and order they are read, the final port (3) is set
     // to trigger an interrupt and stop the sequencer
     // to be finished by you
-    //MAP_ADCSequenceStepConfigure(...
-    //MAP_ADCSequenceStepConfigure(...
-    //MAP_ADCSequenceStepConfigure(...
-    //MAP_ADCSequenceStepConfigure(...
+    //MAP_ADCSequenceStepConfigure(BASE ADDRESS OF ADC MODULE, SEQUENCE NUMBER, STEP TO BE CONFIGURED, CONFIGURATION OF STEP);
+    MAP_ADCSequenceStepConfigure(ADC0_BASE, 0, 0, ADC_CTL_CH0);
+    MAP_ADCSequenceStepConfigure(ADC0_BASE, 0, 1, ADC_CTL_CH1);
+    MAP_ADCSequenceStepConfigure(ADC0_BASE, 0, 2, ADC_CTL_CH2);
+    MAP_ADCSequenceStepConfigure(ADC0_BASE, 0, 3, ADC_CTL_CH3 | ADC_CTL_END | ADC_CTL_IE);  // LAST READ, TRIGGER INTERRUPT.
 
     //Enable the sequencer that goes through the things above
     // to be finished by you
-    //MAP_ADCSequenceEnable(...
+    //MAP_ADCSequenceEnable(BASE ADDRESS OF ADC MODULE, SAMPLE SEQUENCE NUMBER);
+    MAP_ADCSequenceEnable(ADC0_BASE, 0);
 
-    //Clear the ADC interupt
+    //Clear the ADC interrupt
     // to be finished by you
-    //MAP_ADCIntClear(...
+    //MAP_ADCIntClear(BASE ADDRESS OF ADC MODULE, SAMPLE SEQUENCE NUMBER);
+    MAP_ADCIntClear(ADC0_BASE, 0);
 
-    //Enable the ADC interupt
+    //Enable the ADC interrupt
     // to be finished by you
-    //MAP_ADCIntEnable(...
+    //MAP_ADCIntEnable(BASE ADDRESS OF ADC MODULE, SAMPLE SEQUENCE NUMBER);
+    MAP_ADCIntEnable(ADC0_BASE, 0);
 
-    //Enable the ADC interupt globally
+    //Enable the ADC interrupt globally
     // to be finished by you
     //MAP_IntEnable(...
+    MAP_IntEnable(INT_ADC0SS0);
 
 }
 
