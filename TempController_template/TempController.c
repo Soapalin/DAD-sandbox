@@ -54,6 +54,8 @@
 #include "DADSlab/my_code.h"
 #include "DADSlab/images.h"
 
+
+
 //*****************************************************************************
 //
 //! \addtogroup example_list
@@ -354,7 +356,7 @@ main(void)
         MAP_ADCProcessorTrigger(ADC0_BASE, 0);
 
         // uncomment the following line when you finish InitADC
-    	// while (!ADC_done){};	// wait for ADC to finish
+    	while (!ADC_done){};	// wait for ADC to finish
 
     	// blink the LED
     	MAP_GPIOPinWrite(GPIO_PORTG_BASE, GPIO_PIN_2,
