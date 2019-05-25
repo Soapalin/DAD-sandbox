@@ -63,6 +63,10 @@ char ascii_FLT_V[10];
 char ascii_IR_T[10];
 char ascii_PWMH[10];
 char ascii_PWMF[10];
+char ascii_KaF[10];
+char ascii_KbF[10];
+char ascii_KaH[10];
+char ascii_KbH[10];
 
 // parameters for PID
 float Kp = 100.0f;
@@ -478,8 +482,8 @@ void adc2ASCII(void)
 // and later converted into ASCII
 // and stored globally for oled and packet updates
 {
-    ui32Millivolts = (g_pui32ADCData[ui8Idx] * 4100) / 819;
-    uit32_t ui32Millivolts;
+    //ui32Millivolts = (g_pui32ADCData[ui8Idx] * 4100) / 819;
+    //uit32_t ui32Millivolts;
     float ch0V, ch1V, ch2V, ch3V;
     float ch0T, ch1T, ch2T, ch3T;
 
@@ -577,15 +581,14 @@ void InitialScreen(void)
 
 void UpdateScreen(void)
 {
-<<<<<<< HEAD
 	char temp[20];
 	char lsh[20];
 	char flt[20];
 	char ir[20];
 	char pwm[20];
-=======
-    char temp[20];
->>>>>>> c08139050f6450dd82f8cb481f7c147c18bd8b89
+	char kheater[20];
+	char kfan[20];
+
 
     // Initialize the graphics context.
     //GrContextInit(&sContext, &g_sCFAL96x64x16);
@@ -619,6 +622,7 @@ void UpdateScreen(void)
     GrContextForegroundSet(&sContext, ClrBlue);
     GrRectFill(&sContext, &sRect);
 
+    // Update the Temperature Values
     GrContextForegroundSet(&sContext, ClrWhite);    // font colour
 
     strcpy(lsh, "LSH: ");
@@ -650,6 +654,7 @@ void UpdateScreen(void)
     GrRectFill(&sContext, &sRect);
 
 
+    // Update the Controller Duty Cycle and Controller Values
     GrContextForegroundSet(&sContext, ClrWhite);    // font colour
 
     strcpy(pwm, "H=");
@@ -657,7 +662,20 @@ void UpdateScreen(void)
     strcat(pwm, "% F=");
     strcat(pwm, ascii_PWMF);
     strcat(pwm, "%");
+
+    strcpy(kheater, "KaH=");
+    strcat(kheater, ascii_KaH);
+    strcat(kheater, " KbH=");
+    strcat(kheater, ascii_KbH);
+
+    strcpy(kfan, "KaF=");
+    strcat(kfan, ascii_KaF);
+    strcat(kfan, " KbF=");
+    strcat(kfan, ascii_KbF);
+
     GrStringDraw(&sContext, pwm, -1, 0, 50, 0);
+    GrStringDraw(&sContext, pwm, -1, 0, 61, 0);
+    GrStringDraw(&sContext, pwm, -1, 0, 73, 0);
 
 
     // Flush any cached drawing operations.
