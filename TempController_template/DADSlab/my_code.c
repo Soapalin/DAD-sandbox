@@ -415,8 +415,8 @@ void PID_controller(void)
     float tempPWM;
     uint32_t PWMheater;
     uint32_t PWMfan;
-
-    float fanOutput = 34.1;
+    float fanOutput;
+//    float fanOutput = 34.1;
 
 
     float heaterOutput;
@@ -429,7 +429,7 @@ void PID_controller(void)
     float KbH;
     float oldFanPWM;
     float oldHeaterPWM;
-    float actualTemp;
+//    float actualTemp;
 
 
     error = ch0V - ch2V; // error = reference channel - filter output
