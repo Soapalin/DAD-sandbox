@@ -53,6 +53,7 @@ extern tRectangle sRect;
 float ch0V, ch1V, ch2V, ch3V;
 float ch0T, ch1T, ch2T, ch3T;
 
+
 char packet_buffer[100];
 char ascii_REF_T[10];
 char ascii_REF_V[10];
@@ -436,7 +437,7 @@ void PID_controller(void)
 //    float actualTemp;
 
 
-    error = ch0T - ch2T; // error = reference channel - filter output
+    error = ch3T- ch2T; // error = reference channel - filter output
 
     if(error <= 0.3)
     {
@@ -474,8 +475,8 @@ void PID_controller(void)
     MAP_TimerMatchSet(WTIMER2_BASE, TIMER_B, 10000000 - PWMfan);
 
     // update PWM values for the screen
-    snprintf(ascii_PWMH, 10, "%.2f", heaterOutput);
-    snprintf(ascii_PWMF, 10, "%.2f", fanOutput);
+    snprintf(ascii_PWMH, 10, "%i", ((int) (heaterOutput*100)));
+    snprintf(ascii_PWMF, 10, "%i", ((int) (fanOutput*100)));
 
     // update Controller values
     snprintf(ascii_KaF, 10, "%.2f", KaF);
@@ -520,17 +521,17 @@ void adc2ASCII(void)
     ch2V = ulADC0_Value[2] * 0.7326/146;
     ch3V = ulADC0_Value[3] * 0.7326/146;
 
-    snprintf(ascii_REF_V, 10, "%.2f", ch0V);
+    snprintf(ascii_REF_V, 10, "%.2f", ch3V);
     snprintf(ascii_LSH_V, 10, "%.2f", ch1V);
     snprintf(ascii_FLT_V, 10, "%.2f", ch2V);
 
 
-    ch0T = (19.6*ch0V)+26.55; //Reference
+    ch0T = (19.6*ch0V)+26.55; // Reference (not using atm)
     ch1T = (ch1V + 1.3451)/0.0507;; // Level Shifter
     ch2T = (19.6*ch2V)+26.55; // LPF
-    ch3T = (ch3V/0.06 + 20); // ??
+    ch3T = (19.6*ch3V)+26.55; //Reference
 
-    snprintf(ascii_REF_T, 10, "%.1f", ch0T);
+    snprintf(ascii_REF_T, 10, "%.1f", ch3T);
     snprintf(ascii_LSH_T, 10, "%.1f", ch1T);
     snprintf(ascii_FLT_T, 10, "%.1f", ch2T);
 
@@ -667,8 +668,8 @@ void UpdateScreen(void)
     strcat(ir, ascii_IR_T);
     strcat(ir, "C");
 
-    GrStringDraw(&sContext, lsh, -1, 0, 12, 0);      // Level Shifted Signal
-    GrStringDraw(&sContext, flt, -1, 0, 23, 0);      // Filtered Signal
+    GrStringDraw(&sContext, flt, -1, 0, 12, 0);       // Filtered Signal
+    GrStringDraw(&sContext, lsh, -1, 0, 23, 0);      // Level Shifted Signal
     GrStringDraw(&sContext, ir, -1, 0, 34, 0);       // IR sensor
 
     // Fill the next xx rows with green
@@ -813,13 +814,13 @@ void SendPacket(void)
     //char temp0[10];
 
     strcpy(temp, "{\"name\":\"DADS\",\"REF\":");
-    strcat(temp, ascii_REF_T);
+    strcat(temp, ascii_REF_V);
 
     strcat(temp, ",\"LSH\":");
-    strcat(temp, ascii_LSH_T);
+    strcat(temp, ascii_LSH_V);
 
     strcat(temp, ",\"FLT\":");
-    strcat(temp, ascii_FLT_T);
+    strcat(temp, ascii_FLT_V);
 
     strcat(temp, ",\"IR\":");
     strcat(temp, ascii_IR_T);
