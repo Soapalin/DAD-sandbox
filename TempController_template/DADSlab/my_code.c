@@ -479,10 +479,10 @@ void PID_controller(void)
     snprintf(ascii_PWMF, 10, "%i", ((int) (fanOutput*100)));
 
     // update Controller values
-    snprintf(ascii_KaF, 10, "%.2f", KaF);
-    snprintf(ascii_KbF, 10, "%.2f", KbF);
-    snprintf(ascii_KaH, 10, "%.2f", KaH);
-    snprintf(ascii_KbH, 10, "%.2f", KbH);
+    snprintf(ascii_KaF, 10, "%.4f", KaF);
+    snprintf(ascii_KbF, 10, "%.4f", KbF);
+    snprintf(ascii_KaH, 10, "%.4f", KaH);
+    snprintf(ascii_KbH, 10, "%.4f", KbH);
 
 }
 
@@ -613,9 +613,10 @@ void UpdateScreen(void)
 	char flt[20];
 	char ir[20];
 	char pwm[20];
-	char kheater[20];
-	char kfan[20];
-
+	char kah[20];
+	char kbh[20];
+    char kaf[20];
+    char kbf[20];
 
     // Initialize the graphics context.
     //GrContextInit(&sContext, &g_sCFAL96x64x16);
@@ -680,29 +681,50 @@ void UpdateScreen(void)
     GrContextForegroundSet(&sContext, ClrGreen);
     GrRectFill(&sContext, &sRect);
 
-
     // Update the Controller Duty Cycle and Controller Values
     GrContextForegroundSet(&sContext, ClrWhite);    // font colour
 
+    // Update control efforts
     strcpy(pwm, "H=");
     strcat(pwm, ascii_PWMH);
     strcat(pwm, "% F=");
     strcat(pwm, ascii_PWMF);
     strcat(pwm, "%");
-
-    strcpy(kheater, "KaH=");
-    strcat(kheater, ascii_KaH);
-    strcat(kheater, " KbH=");
-    strcat(kheater, ascii_KbH);
-
-    strcpy(kfan, "KaF=");
-    strcat(kfan, ascii_KaF);
-    strcat(kfan, " KbF=");
-    strcat(kfan, ascii_KbF);
-
     GrStringDraw(&sContext, pwm, -1, 0, 46, 0);
-    GrStringDraw(&sContext, kheater, -1, 0, 55, 0);
-    GrStringDraw(&sContext, kfan, -1, 0, 67, 0);
+
+    // Cycle the controller parameters
+    static int count = 0;
+    if (count < 30)
+    {
+        strcpy(kah, "KaH=");
+        strcat(kah, ascii_KaH);
+        GrStringDraw(&sContext, kah, -1, 0, 55, 0);
+    }
+    else if (count >= 30 && count< 60)
+    {
+        strcat(kbh, "KbH=");
+        strcat(kbh, ascii_KbH);
+        GrStringDraw(&sContext, kbh, -1, 0, 55, 0);
+    }
+    else if (count >= 60 && count < 90)
+    {
+        strcpy(kaf, "KaF=");
+        strcat(kaf, ascii_KaF);
+        GrStringDraw(&sContext, kaf, -1, 0, 55, 0);
+    }
+    else if (count >= 90 && count < 120)
+    {
+        strcat(kbf, "KbF=");
+        strcat(kbf, ascii_KbF);
+        GrStringDraw(&sContext, kbf, -1, 0, 55, 0);
+    }
+    else
+    {
+        count = 0;
+    }
+
+    count ++;
+
 
 
     // Flush any cached drawing operations.
