@@ -73,14 +73,15 @@ char ascii_KbH[10];
 //float Kp = 100.0f;
 //float Ki = 0.2f;
 //float Kd = 0.02f;
-const float KPH = 0.4268;
-const float KIH = 0.0176;
+const float KPH = 0.4268*1.7;
+const float KIH = 0.0176*2.4;
 const float KPF = 0.11;
-const float KIF = 0.1983;
+const float KIF = 0.1983*0.01;
 
 float previous_error = 0;
 float integral = 0;
-float DT = 0.0001;  // 100ms
+float DT = 0.1;  // 100ms
+int Average; // Average of th ref temp
 
 //*****************************************************************************
 // Initialization functions
@@ -432,14 +433,26 @@ void PID_controller(void)
     float KbF = KIF*DT - KPF;
     float KaH = KPH;
     float KbH = KIH*DT - KPH;
+
     static float oldFanPWM = 0;
     static float oldHeaterPWM = 0;
 //    float actualTemp;
+    static float averageReference[5];
 
 
-    error = ch3T- ch2T; // error = reference channel - filter output
 
-    if(error <= 0.3)
+   averageReference[4] = averageReference[3];
+   averageReference[3] = averageReference[2];
+   averageReference[2] = averageReference[1];
+   averageReference[1] = averageReference[0];
+   averageReference[0] = ch3T;
+
+
+   Average = (averageReference[4]+averageReference[3]+averageReference[2]+averageReference[1]+averageReference[0])/5; // Averaging the ref temp
+
+    error = Average - ch2T; // error = reference channel - filter output
+
+    if(error <= -0.3)
     {
         heaterOutput = 0.01;
         fanOutput = oldFanPWM + (((KaF*(-error))+ ((KbF)*(-oldError))));
@@ -450,11 +463,6 @@ void PID_controller(void)
         fanOutput = 0.01;
     }
 
-    oldError = error;
-    oldHeaterPWM = heaterOutput;
-    oldFanPWM = fanOutput;
-
-
 
     // convert output (PWM) into the value to write into registers
     if(heaterOutput > 0.99) heaterOutput = 0.99f; // If heaterOuput is over 0.99, make it equal to 0.99
@@ -464,6 +472,9 @@ void PID_controller(void)
     if(fanOutput > 0.99) fanOutput = 0.99f; // If fanOuput is over 0.99, make it equal to 0.99
     if(fanOutput < 0.01) fanOutput = 0.01f; // If fanOutput is under 0.01, make it equal to 0.01
 
+    oldError = error;
+    oldHeaterPWM = heaterOutput;
+    oldFanPWM = fanOutput;
 
 
     tempPWM = heaterOutput * 50000;
@@ -520,8 +531,8 @@ void adc2ASCII(void)
     ch1V = ulADC0_Value[1] * 0.7326/146;
     ch2V = ulADC0_Value[2] * 0.7326/146;
     ch3V = ulADC0_Value[3] * 0.7326/146;
-
-    snprintf(ascii_REF_V, 10, "%.2f", ch3V);
+    float averageV = (Average - 26.55)/19.6;
+    snprintf(ascii_REF_V, 10, "%.2f", averageV);
     snprintf(ascii_LSH_V, 10, "%.2f", ch1V);
     snprintf(ascii_FLT_V, 10, "%.2f", ch2V);
 
@@ -531,7 +542,7 @@ void adc2ASCII(void)
     ch2T = (19.6*ch2V)+26.55; // LPF
     ch3T = (19.6*ch3V)+26.55; //Reference
 
-    snprintf(ascii_REF_T, 10, "%.1f", ch3T);
+    snprintf(ascii_REF_T, 10, "%i", Average);
     snprintf(ascii_LSH_T, 10, "%.1f", ch1T);
     snprintf(ascii_FLT_T, 10, "%.1f", ch2T);
 
