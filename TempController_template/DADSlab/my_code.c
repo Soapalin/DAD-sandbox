@@ -53,7 +53,7 @@ extern tRectangle sRect;
 float ch0V, ch1V, ch2V, ch3V;
 float ch0T, ch1T, ch2T, ch3T;
 
-
+//ASCII for display and serial packets
 char packet_buffer[100];
 char ascii_REF_T[10];
 char ascii_REF_V[10];
@@ -64,24 +64,21 @@ char ascii_FLT_V[10];
 char ascii_IR_T[10];
 char ascii_PWMH[10];
 char ascii_PWMF[10];
-char ascii_KaF[10];
-char ascii_KbF[10];
-char ascii_KaH[10];
-char ascii_KbH[10];
+char ascii_KpF[10];
+char ascii_KiF[10];
+char ascii_KpH[10];
+char ascii_KiH[10];
 
 // parameters for PID
-//float Kp = 100.0f;
-//float Ki = 0.2f;
-//float Kd = 0.02f;
-const float KPH = 0.4268*1.7;
-const float KIH = 0.0176*2.4;
+const float KPH = 0.72556;
+const float KIH = 0.04224;
 const float KPF = 0.11;
-const float KIF = 0.1983*0.01;
+const float KIF = 0.001983;
 
 float previous_error = 0;
 float integral = 0;
-float DT = 0.1;  // 100ms
-int Average; // Average of th ref temp
+float DT = 0.1;         // 100ms
+int Average;            // Average of the reference temperature
 
 //*****************************************************************************
 // Initialization functions
@@ -280,63 +277,43 @@ void InitADC()
     MAP_SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOE);
 
     // Configure the pins to be used as analog inputs.
-    // to be finished by you
-    // MAP_GPIOPinTypeADC(BASE ADDRESS OF GPIO PORT, BIT PACKED REPRESENTATION OF THE PIN(S);
     MAP_GPIOPinTypeADC(GPIO_PORTC_BASE, GPIO_PIN_0 | GPIO_PIN_1 | GPIO_PIN_2 | GPIO_PIN_3);
 
     // Select the external reference for greatest accuracy.
-    // to be finished by you
-    // MAP_ADCReferenceSet(BASE ADDRESS OF ADC MODULE, REFERENCE TO USE);
     MAP_ADCReferenceSet(ADC0_BASE, ADC_REF_EXT_3V);
 
     // Apply workaround for erratum 6.1, in order to use the
     // external reference.
     MAP_SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOB);
-    //MAP_SysCtlDelay(100);
     HWREG(GPIO_PORTB_BASE + GPIO_O_AMSEL) |= GPIO_PIN_6;
 
     //Set the ADC samples speed
     // doesn't work in Tivaware http://e2e.ti.com/support/microcontrollers/tiva_arm/f/908/t/261496.aspx
     // don't do it
     //MAP_SysCtlADCSpeedSet(SYSCTL_ADCSPEED_125KSPS);
-
     MAP_ADCSequenceDisable(ADC0_BASE, 0);
 
-
     // Initialize the ADC0 peripheral using sequencer 0 and processor trigger.
-    // to be finished by you
-    // MAP_ADCSequenceConfigure(BASE ADDRESS OF ADC MODULE, SAMPLE SEQUENCE NUMBER, TRIGGER SOURCE, PRIORITY);
     MAP_ADCSequenceConfigure(ADC0_BASE, 0, ADC_TRIGGER_PROCESSOR, 0);
 
     //Sets the input positions, and order they are read, the final port (3) is set
     // to trigger an interrupt and stop the sequencer
-    // to be finished by you
-    //MAP_ADCSequenceStepConfigure(BASE ADDRESS OF ADC MODULE, SEQUENCE NUMBER, STEP TO BE CONFIGURED, CONFIGURATION OF STEP);
     MAP_ADCSequenceStepConfigure(ADC0_BASE, 0, 0, ADC_CTL_CH0);
     MAP_ADCSequenceStepConfigure(ADC0_BASE, 0, 1, ADC_CTL_CH1);
     MAP_ADCSequenceStepConfigure(ADC0_BASE, 0, 2, ADC_CTL_CH2);
     MAP_ADCSequenceStepConfigure(ADC0_BASE, 0, 3, ADC_CTL_CH3 | ADC_CTL_END | ADC_CTL_IE);  // LAST READ, TRIGGER INTERRUPT.
 
     //Enable the sequencer that goes through the things above
-    // to be finished by you
-    //MAP_ADCSequenceEnable(BASE ADDRESS OF ADC MODULE, SAMPLE SEQUENCE NUMBER);
     MAP_ADCSequenceEnable(ADC0_BASE, 0);
 
     //Clear the ADC interrupt
-    // to be finished by you
-    //MAP_ADCIntClear(BASE ADDRESS OF ADC MODULE, SAMPLE SEQUENCE NUMBER);
     MAP_ADCIntClear(ADC0_BASE, 0);
 
     //Enable the ADC interrupt
-    // to be finished by you
-    //MAP_ADCIntEnable(BASE ADDRESS OF ADC MODULE, SAMPLE SEQUENCE NUMBER);
     MAP_ADCIntEnable(ADC0_BASE, 0);
 
     //Enable the ADC interrupt globally
-    // to be finished by you
-    //MAP_IntEnable(...
     MAP_IntEnable(INT_ADC0SS0);
-
 }
 
 
@@ -400,58 +377,39 @@ void ADC0SS0Handler(void)
 
 void PID_controller(void)
 {
-    /*
-     * Pseudo code (source Wikipedia)
-     *
-    previous_error = 0
-    integral = 0
-    start:
-        error = setpoint – PV [actual_position]
-        integral = integral + error*dt
-        derivative = (error - previous_error)/dt
-        output = Kp*error + Ki*integral + Kd*derivative
-        previous_error = error
-        wait(dt)
-        goto start
-    */
-
-    static float error = 0;
-
-
+    // define parameters
+    float error = 0;
     float tempPWM;
     uint32_t PWMheater;
     uint32_t PWMfan;
     float fanOutput;
-//    float fanOutput = 34.1;
-
-
     float heaterOutput;
-    // to be finished by you
-    // ...
-    static float oldError = 0;
+
+    // calculate discrete controller values
     float KaF = KPF;
     float KbF = KIF*DT - KPF;
     float KaH = KPH;
     float KbH = KIH*DT - KPH;
 
+    // keep track of old values
+    static float oldError = 0;
     static float oldFanPWM = 0;
     static float oldHeaterPWM = 0;
-//    float actualTemp;
     static float averageReference[5];
 
-
-
+   // sliding window for reference average
    averageReference[4] = averageReference[3];
    averageReference[3] = averageReference[2];
    averageReference[2] = averageReference[1];
    averageReference[1] = averageReference[0];
    averageReference[0] = ch3T;
 
-
-   Average = (averageReference[4]+averageReference[3]+averageReference[2]+averageReference[1]+averageReference[0])/5; // Averaging the ref temp
+   // Averaging the reference temperature
+   Average = (averageReference[4]+averageReference[3]+averageReference[2]+averageReference[1]+averageReference[0])/5;
 
     error = Average - ch2T; // error = reference channel - filter output
 
+    //Implement heating or cooling control efforts
     if(error <= -0.3)
     {
         heaterOutput = 0.01;
@@ -463,19 +421,16 @@ void PID_controller(void)
         fanOutput = 0.01;
     }
 
-
     // convert output (PWM) into the value to write into registers
     if(heaterOutput > 0.99) heaterOutput = 0.99f; // If heaterOuput is over 0.99, make it equal to 0.99
     if(heaterOutput < 0.01) heaterOutput = 0.01f; // If heaterOutput is under 0.01, make it equal to 0.01
-
-
     if(fanOutput > 0.99) fanOutput = 0.99f; // If fanOuput is over 0.99, make it equal to 0.99
     if(fanOutput < 0.01) fanOutput = 0.01f; // If fanOutput is under 0.01, make it equal to 0.01
 
+    // store old error
     oldError = error;
     oldHeaterPWM = heaterOutput;
     oldFanPWM = fanOutput;
-
 
     tempPWM = heaterOutput * 50000;
     PWMheater = (uint32_t)tempPWM;
@@ -489,12 +444,11 @@ void PID_controller(void)
     snprintf(ascii_PWMH, 10, "%i", ((int) (heaterOutput*100)));
     snprintf(ascii_PWMF, 10, "%i", ((int) (fanOutput*100)));
 
-    // update Controller values
-    snprintf(ascii_KaF, 10, "%.4f", KaF);
-    snprintf(ascii_KbF, 10, "%.4f", KbF);
-    snprintf(ascii_KaH, 10, "%.4f", KaH);
-    snprintf(ascii_KbH, 10, "%.4f", KbH);
-
+    // update controller values for display
+    snprintf(ascii_KpF, 10, "%.4f", KPF);
+    snprintf(ascii_KiF, 10, "%.4f", KIF);
+    snprintf(ascii_KpH, 10, "%.4f", KPH);
+    snprintf(ascii_KiH, 10, "%.4f", KIH);
 }
 
 //*****************************************************************************
@@ -505,28 +459,12 @@ void PID_controller(void)
 // Utilities
 //*****************************************************************************
 void adc2ASCII(void)
-//uint8_t ascii_REF_T[10];
-//uint8_t ascii_REF_V[10];
-//uint8_t ascii_FLT_T[10];
-//uint8_t ascii_FLT_V[10];
-//uint8_t ascii_LSH_T[10];
-//uint8_t ascii_LSH_V[10];
-//uint8_t ascii_PWMH[10];
-//uint8_t ascii_PWMF[10];
-
 // on entry the ulADC0_Value[4] buffer holds the current reading
 // from ADC CH0-CH3
 // the readings are converted into voltages and temperatures
 // and later converted into ASCII
-// and stored globally for oled and packet updates
+// and stored globally for OLED and packet updates
 {
-    //ui32Millivolts = (g_pui32ADCData[ui8Idx] * 4100) / 819;
-    //uit32_t ui32Millivolts;
-    //float ch0V, ch1V, ch2V, ch3V;
-    //float ch0T, ch1T, ch2T, ch3T;
-
-//  ui32Millivolts = (ulADC0_Value[0] * 4100) / 819;
-//  ch0V = ui32Millivolts / 1000;
     ch0V = ulADC0_Value[0] * 0.7326/146;
     ch1V = ulADC0_Value[1] * 0.7326/146;
     ch2V = ulADC0_Value[2] * 0.7326/146;
@@ -536,7 +474,6 @@ void adc2ASCII(void)
     snprintf(ascii_LSH_V, 10, "%.2f", ch1V);
     snprintf(ascii_FLT_V, 10, "%.2f", ch2V);
 
-
     ch0T = (19.6*ch0V)+26.55; // Reference (not using atm)
     ch1T = (ch1V + 1.3451)/0.0507;; // Level Shifter
     ch2T = (19.6*ch2V)+26.55; // LPF
@@ -545,7 +482,6 @@ void adc2ASCII(void)
     snprintf(ascii_REF_T, 10, "%i", Average);
     snprintf(ascii_LSH_T, 10, "%.1f", ch1T);
     snprintf(ascii_FLT_T, 10, "%.1f", ch2T);
-
 }
 
 
@@ -570,10 +506,6 @@ void InitialScreen(void)
     sRect.i16YMax = 11;
     GrContextForegroundSet(&sContext, ClrRed);
     GrRectFill(&sContext, &sRect);
-
-    // Put a white box around the banner.
-    //GrContextForegroundSet(&sContext, ClrWhite);
-    //GrRectDraw(&sContext, &sRect);
 
     // Display Set Point (Reference Temperature)
     //GrContextFontSet(&sContext, g_psFontCm12);
@@ -605,20 +537,13 @@ void InitialScreen(void)
     GrContextForegroundSet(&sContext, ClrWhite);    // font colour
     GrStringDraw(&sContext, "H=99% F=33%", -1, 0, 50, 0);
 
-
-    //GrStringDraw(&sContext, "H=99% F=33%", -1, 12, 0, 0);
-    //ReDrawTxtBox("FTL: 5.11V 99.9C", 0,0,95,12, ClrYellow);
-    //ReDrawTxtBox("H=99% F=33%", 0,12,95,12, ClrGray);
-    //ReDrawTxtBox("REF: 123.1C", 0,25,95,12, ClrRed);
-    //ReDrawTxtBox("C1234567890", 0,38,95,12, ClrGreen);
-    //ReDrawTxtBox("FLT:5.11V 33.3C", 0,51,95,12, ClrGray);
-
     // Flush any cached drawing operations.
     GrFlush(&sContext);
 }
 
 void UpdateScreen(void)
 {
+    // string for display
 	char temp[20];
 	char lsh[20];
 	char flt[20];
@@ -629,9 +554,6 @@ void UpdateScreen(void)
     char kaf[20];
     char kbf[20];
 
-    // Initialize the graphics context.
-    //GrContextInit(&sContext, &g_sCFAL96x64x16);
-
     // Fill the top 12 rows of the screen with red
     sRect.i16XMin = 0;
     sRect.i16YMin = 0;
@@ -641,7 +563,6 @@ void UpdateScreen(void)
     GrRectFill(&sContext, &sRect);
 
     // Display Set Point (Reference Temperature)
-    //GrContextFontSet(&sContext, g_psFontCm12);
     GrContextFontSet(&sContext, g_psFontFixed6x8);
     GrContextForegroundSet(&sContext, ClrWhite);    // font colour
     strcpy(temp, "REF: ");
@@ -651,8 +572,6 @@ void UpdateScreen(void)
     strcat(temp, "C");
     GrStringDraw(&sContext, temp, -1, 0, 1, 0);
 
-    // to be finished by you
-    // ...
     // Fill the next xx rows with blue
     sRect.i16XMin = 0;
     sRect.i16YMin = 10;
@@ -707,26 +626,26 @@ void UpdateScreen(void)
     static int count = 0;
     if (count < 30)
     {
-        strcpy(kah, "KaH=");
-        strcat(kah, ascii_KaH);
+        strcpy(kah, "KpH=");
+        strcat(kah, ascii_KpH);
         GrStringDraw(&sContext, kah, -1, 0, 55, 0);
     }
     else if (count >= 30 && count< 60)
     {
-        strcat(kbh, "KbH=");
-        strcat(kbh, ascii_KbH);
+        strcat(kbh, "KiH=");
+        strcat(kbh, ascii_KiH);
         GrStringDraw(&sContext, kbh, -1, 0, 55, 0);
     }
     else if (count >= 60 && count < 90)
     {
-        strcpy(kaf, "KaF=");
-        strcat(kaf, ascii_KaF);
+        strcpy(kaf, "KpF=");
+        strcat(kaf, ascii_KpF);
         GrStringDraw(&sContext, kaf, -1, 0, 55, 0);
     }
     else if (count >= 90 && count < 120)
     {
-        strcat(kbf, "KbF=");
-        strcat(kbf, ascii_KbF);
+        strcat(kbf, "KiF=");
+        strcat(kbf, ascii_KiF);
         GrStringDraw(&sContext, kbf, -1, 0, 55, 0);
     }
     else
@@ -735,8 +654,6 @@ void UpdateScreen(void)
     }
 
     count ++;
-
-
 
     // Flush any cached drawing operations.
     GrFlush(&sContext);
